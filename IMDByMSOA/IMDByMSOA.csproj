@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="imd2019lsoa.csv" />
+    <None Remove="Index_of_Multiple_Deprivation_%28December_2019%29_Lookup_in_England.csv" />
+    <None Remove="LSOAPopulation2018.csv" />
+    <None Remove="Output_Area_to_LSOA_to_MSOA_to_Local_Authority_District_%28December_2017%29_Lookup_with_Area_Classifications_in_Great_Britain.csv" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="imd2019lsoa.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Index_of_Multiple_Deprivation_(December_2019)_Lookup_in_England.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="LSOAPopulation2018.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Output_Area_to_LSOA_to_MSOA_to_Local_Authority_District_(December_2017)_Lookup_with_Area_Classifications_in_Great_Britain.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CsvHelper" Version="15.0.5" />
+  </ItemGroup>
+
+</Project>
