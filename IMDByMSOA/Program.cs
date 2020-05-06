@@ -24,6 +24,16 @@ namespace IMDByMSOA
                 }
             }
 
+            // https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/earningsandworkinghours/datasets/smallareaincomeestimatesformiddlelayersuperoutputareasenglandandwales
+            Dictionary<string, IncomeByMSOA> IncomeByMSOADictionary = new Dictionary<string, IncomeByMSOA>();
+            using (StreamReader reader = new StreamReader(@"netannualincomeafterhousingcosts2018.csv"))
+            {
+                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    IncomeByMSOADictionary = csv.GetRecords<IncomeByMSOA>().ToDictionary(x => x.MSOAcode, x => x);
+                }
+            }
+
             // https://geoportal.statistics.gov.uk/datasets/output-area-to-lsoa-to-msoa-to-local-authority-district-december-2017-lookup-with-area-classifications-in-great-britain
             Dictionary<string, string> LSOAToMSOA = new Dictionary<string, string>();
             using (StreamReader reader = new StreamReader(@"Output_Area_to_LSOA_to_MSOA_to_Local_Authority_District_(December_2017)_Lookup_with_Area_Classifications_in_Great_Britain.csv"))
@@ -78,14 +88,35 @@ namespace IMDByMSOA
                 }
             }
 
-            // Calculate deciles 
+            // Join MSOAs with income and region data
+            foreach(IMDByMSOA msoa in IMDsByMSOA)
+            {
+                IncomeByMSOA msoatojoin = IncomeByMSOADictionary[msoa.MSOA];
+                msoa.MSOAname = msoatojoin.MSOAname;
+                msoa.MSOAcode = msoatojoin.MSOAcode;
+                msoa.LAcode = msoatojoin.LAcode;
+                msoa.LAname = msoatojoin.LAname;
+                msoa.Regioncode = msoatojoin.Regioncode;
+                msoa.Regionname = msoatojoin.Regionname;
+                msoa.NetAnnualIncomeAfterHousingCosts2018 = msoatojoin.NETAIAHC;
+            }
+
+            // Calculate deciles for income
             int MSOACount = IMDsByMSOA.Count;
+            IMDsByMSOA = IMDsByMSOA.OrderBy(x => x.NetAnnualIncomeAfterHousingCosts2018).ToList();
+            for (int i = 0; i < 10; i++)
+            {
+                IMDsByMSOA.Skip((MSOACount * i) / 10).Take(MSOACount / 10).ToList().ForEach(x => x.IncomeDecile = i + 1);
+            }
+            IMDsByMSOA.Where(x => x.IncomeDecile == 0).ToList().ForEach(x => x.IncomeDecile = 10);
+
+            // Calculate deciles for IMD
+            MSOACount = IMDsByMSOA.Count;
             IMDsByMSOA = IMDsByMSOA.OrderBy(x => x.IMD19).ToList();
             for (int i = 0; i < 10; i++)
             {
                 IMDsByMSOA.Skip((MSOACount * i) / 10).Take(MSOACount / 10).ToList().ForEach(x => x.DeprivationDecile = i + 1);
             }
-
             // Sometimes one list element gets left with a decile of 0
             IMDsByMSOA.Where(x => x.DeprivationDecile == 0).ToList().ForEach(x => x.DeprivationDecile = 10);
 
@@ -95,8 +126,18 @@ namespace IMDByMSOA
                 CsvWriter CSVwriter = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
                 CSVwriter.WriteRecords(IMDsByMSOA);
             }
-
         }
+    }
+
+    public class IncomeByMSOA
+    {
+        public string MSOAcode { get; set; }
+        public string MSOAname { get; set; }
+        public string LAcode { get; set; }
+        public string LAname { get; set; }
+        public string Regioncode { get; set; }
+        public string Regionname { get; set; }
+        public int NETAIAHC { get; set; }
     }
 
     public class LSOAPopulation
@@ -108,6 +149,16 @@ namespace IMDByMSOA
     public class IMDByMSOA
     {
         public string MSOA { get; set; }
+        public int Population2018 { get; set; }
+        public int PopulationOver70 { get; set; }
+        public double NetAnnualIncomeAfterHousingCosts2018 { get; set; }
+        public int IncomeDecile { get; set; }
+        public string MSOAcode { get; set; }
+        public string MSOAname { get; set; }
+        public string LAcode { get; set; }
+        public string LAname { get; set; }
+        public string Regioncode { get; set; }
+        public string Regionname { get; set; }
         public double IMD19 { get; set; }
         public int DeprivationDecile { get; set; }
     }
