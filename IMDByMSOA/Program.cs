@@ -163,7 +163,7 @@ namespace IMDByMSOA
             {
                 int totake = (int)((MSOACount* i / 10) + remainder);
                 remainder = (totake % 10) / 10;
-                IMDsByMSOA.Skip(totake).ToList().ForEach(x => x.IncomeDecile_withinEngland = i);
+                IMDsByMSOA.Skip(totake).ToList().ForEach(x => x.IncomeDecile_withinEngland = i + 1);
             }
 
             // Calculate national (England) deciles for IMD
@@ -173,7 +173,7 @@ namespace IMDByMSOA
             {
                 int totake = (int)((MSOACount * i / 10) + remainder);
                 remainder = (totake % 10) / 10;
-                IMDsByMSOA.Skip(totake).ToList().ForEach(x => x.DeprivationDecile_withinEngland = i);
+                IMDsByMSOA.Skip(totake).ToList().ForEach(x => x.DeprivationDecile_withinEngland = i + 1);
             }            
 
             List<string> UniqueRegions = IMDsByMSOA.Select(x => x.Regioncode).Distinct().ToList();           
@@ -188,7 +188,7 @@ namespace IMDByMSOA
                 {
                     int totake = (int)((MSOACountInRegion * i / 10) + remainder);
                     remainder = (totake % 10) / 10;
-                    MSOAsInRegion.Skip(totake).ToList().ForEach(x => x.IncomeDecile_withinRegion = i);
+                    MSOAsInRegion.Skip(totake).ToList().ForEach(x => x.IncomeDecile_withinRegion = i + 1);
                 }
 
                 // Calculate regional (England) deciles for IMD
@@ -198,7 +198,7 @@ namespace IMDByMSOA
                 {
                     int totake = (int)((MSOACountInRegion * i / 10) + remainder);
                     remainder = (totake % 10) / 10;
-                    MSOAsInRegion.Skip(totake).ToList().ForEach(x => x.DeprivationDecile_withinRegion = i);
+                    MSOAsInRegion.Skip(totake).ToList().ForEach(x => x.DeprivationDecile_withinRegion = i + 1);
                 }
             }
 
@@ -214,7 +214,7 @@ namespace IMDByMSOA
                 {
                     int totake = (int)((MSOACountInLA * i / 10) + remainder);
                     remainder = (totake % 10) / 10;
-                    MSOAsInLA.Skip(totake).ToList().ForEach(x => x.IncomeDecile_withinLA = i);
+                    MSOAsInLA.Skip(totake).ToList().ForEach(x => x.IncomeDecile_withinLA = i + 1);
                 }
                
                 // Calculate LA deciles (England) for IMD
@@ -224,7 +224,7 @@ namespace IMDByMSOA
                 {
                     int totake = (int)((MSOACountInLA * i / 10) + remainder); 
                     remainder = (totake % 10)/10;
-                    MSOAsInLA.Skip(totake).ToList().ForEach(x => x.DeprivationDecile_withinLA = i);
+                    MSOAsInLA.Skip(totake).ToList().ForEach(x => x.DeprivationDecile_withinLA = i + 1);
                 }
             }
 
