@@ -24,6 +24,28 @@ namespace IMDByMSOA
                 }
             }
 
+            // Deaths involving Covid-19, exceptional release 01 May 2020
+            // https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/deathsinvolvingcovid19bylocalareaanddeprivation
+            Dictionary<string, CVDeaths> CVDeathsDictionary = new Dictionary<string, CVDeaths>();
+            using (StreamReader reader = new StreamReader(@"DeathsByMSOA_ONS1MayCovid19MortalityRelease.csv"))
+            {
+                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    CVDeathsDictionary = csv.GetRecords<CVDeaths>().ToDictionary(x => x.MSOAcode, x => x);
+                }
+            }
+
+            // Historic death count by MSOA for England & Wales
+            // https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/adhocs/006979numberofdeathsoccurringbymsoaand5yearagegroupsenglandandwales2004to2015
+            Dictionary<string, HistoricDeathsByMSOA> HistoricDeathDictionary = new Dictionary<string, HistoricDeathsByMSOA>();
+            using (StreamReader reader = new StreamReader(@"201320142015DeathsByMSOA.csv"))
+            {
+                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    HistoricDeathDictionary = csv.GetRecords<HistoricDeathsByMSOA>().ToDictionary(x => x.MSOAcode, x => x);
+                }
+            }
+
             // https://www.ons.gov.uk/employmentandlabourmarket/peopleinwork/earningsandworkinghours/datasets/smallareaincomeestimatesformiddlelayersuperoutputareasenglandandwales
             Dictionary<string, IncomeByMSOA> IncomeByMSOADictionary = new Dictionary<string, IncomeByMSOA>();
             using (StreamReader reader = new StreamReader(@"netannualincomeafterhousingcosts2018.csv"))
@@ -48,6 +70,19 @@ namespace IMDByMSOA
                             LSOAToMSOA.Add(oalink.LSOA11CD, oalink.MSOA11CD);
                         }
                     }
+                }
+            }
+
+            // MSOA Centroids and Boundaries (if you want them later)
+            // https://data.gov.uk/dataset/2cf1f346-2f74-4c06-bd4b-30d7e4df5ae7/middle-layer-super-output-area-msoa-boundaries
+
+            // https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/middlesuperoutputareamidyearpopulationestimates
+            Dictionary<string, MSOAPopulation> MSOAPopulationDictionary = new Dictionary<string, MSOAPopulation>();
+            using (StreamReader reader = new StreamReader(@"MSOAPopulation2018.csv"))
+            {
+                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    MSOAPopulationDictionary = csv.GetRecords<MSOAPopulation>().ToDictionary(x => x.MSOAcode, x => x);
                 }
             }
 
@@ -88,9 +123,10 @@ namespace IMDByMSOA
                 }
             }
 
-            // Join MSOAs with income and region data
+            // Join MSOAs with income and region data. Really sorry but we lose Welsh data at this step, because IMDs for Wales are different.
             foreach(IMDByMSOA msoa in IMDsByMSOA)
             {
+                // income and region data
                 IncomeByMSOA msoatojoin = IncomeByMSOADictionary[msoa.MSOA];
                 msoa.MSOAname = msoatojoin.MSOAname;
                 msoa.MSOAcode = msoatojoin.MSOAcode;
@@ -99,6 +135,21 @@ namespace IMDByMSOA
                 msoa.Regioncode = msoatojoin.Regioncode;
                 msoa.Regionname = msoatojoin.Regionname;
                 msoa.NetAnnualIncomeAfterHousingCosts2018 = msoatojoin.NETAIAHC;
+
+                // historic death rate by msoa
+                HistoricDeathsByMSOA historicdeathtojoin = HistoricDeathDictionary[msoa.MSOA];
+                msoa.AllDeaths20132014And2015 = historicdeathtojoin.DeathsAllAges;
+                msoa.ExpectedDeaths30MarTo17Apr2020 = msoa.AllDeaths20132014And2015 * 48 / (365 * 3);
+
+                // Covid19 period deaths
+                CVDeaths cvdeaths = CVDeathsDictionary[msoa.MSOA];
+                msoa.ConfirmedCovid19Deaths30MarTo17Apr2020 = cvdeaths.DeathsCOVID19;
+                msoa.AllDeaths30MarTo17Apr2020 = cvdeaths.DeathsAllCauses;
+
+                // msoa population structure
+                MSOAPopulation msoapop = MSOAPopulationDictionary[msoa.MSOA];
+                msoa.Population2018 = msoapop.Population;
+                msoa.PopulationOver70 = msoapop.Population70AndOver;
             }
 
             // Calculate deciles for income
@@ -121,12 +172,34 @@ namespace IMDByMSOA
             IMDsByMSOA.Where(x => x.DeprivationDecile == 0).ToList().ForEach(x => x.DeprivationDecile = 10);
 
             // Write the result
-            using (TextWriter textWriter = File.CreateText(@"IMDByMSOA.csv"))
+            using (TextWriter textWriter = File.CreateText(@"IMDByMSOA_AndCovidData_AndIncomeData.csv"))
             {
                 CsvWriter CSVwriter = new CsvWriter(textWriter, CultureInfo.InvariantCulture);
                 CSVwriter.WriteRecords(IMDsByMSOA);
             }
         }
+    }
+
+    public class MSOAPopulation
+    {
+        public string MSOAcode { get; set; }
+        public int Population { get; set; }
+        public int Population70AndOver { get; set; }
+    }
+
+    public class HistoricDeathsByMSOA
+    {
+        public string Years { get; set; }
+        public string MSOAcode { get; set; }
+        public long DeathsAllAges { get; set; }
+    }
+
+    public class CVDeaths
+    {
+        public string MSOAcode { get; set; }
+        public string MSOAname { get; set; }
+        public long DeathsAllCauses { get; set; }
+        public long DeathsCOVID19 { get; set; }
     }
 
     public class IncomeByMSOA
@@ -137,7 +210,7 @@ namespace IMDByMSOA
         public string LAname { get; set; }
         public string Regioncode { get; set; }
         public string Regionname { get; set; }
-        public int NETAIAHC { get; set; }
+        public long NETAIAHC { get; set; }
     }
 
     public class LSOAPopulation
@@ -161,6 +234,11 @@ namespace IMDByMSOA
         public string Regionname { get; set; }
         public double IMD19 { get; set; }
         public int DeprivationDecile { get; set; }
+
+        public double ExpectedDeaths30MarTo17Apr2020 { get; set; }
+        public long AllDeaths30MarTo17Apr2020 { get; set; }
+        public long ConfirmedCovid19Deaths30MarTo17Apr2020 { get; set; }
+        public long AllDeaths20132014And2015 { get; set; }
     }
 
     public class IMDByLSOA
