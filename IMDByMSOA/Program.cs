@@ -147,7 +147,7 @@ namespace IMDByMSOA
                 msoa.AllDeaths30MarTo17Apr2020 = cvdeaths.DeathsAllCauses;
 
                 msoa.ExcessDeaths30MarTo17Apr2020 = msoa.AllDeaths30MarTo17Apr2020 - msoa.ExpectedDeaths30MarTo17Apr2020;
-                msoa.DeathsAsPercentOfExpected30MarTo17Apr2020 = msoa.AllDeaths30MarTo17Apr2020 / msoa.ExcessDeaths30MarTo17Apr2020;
+                msoa.DeathsAsPercentOfExpected30MarTo17Apr2020 = msoa.AllDeaths30MarTo17Apr2020 / msoa.ExpectedDeaths30MarTo17Apr2020;
 
                 // msoa population structure
                 MSOAPopulation msoapop = MSOAPopulationDictionary[msoa.MSOA];
