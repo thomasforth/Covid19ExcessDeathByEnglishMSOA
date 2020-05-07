@@ -57,7 +57,7 @@ namespace IMDByMSOA
             }
 
             // https://geoportal.statistics.gov.uk/datasets/output-area-to-lsoa-to-msoa-to-local-authority-district-december-2017-lookup-with-area-classifications-in-great-britain
-            Dictionary<string, string> LSOAToMSOA = new Dictionary<string, string>();
+            Dictionary<string, OAToLSOAToMSOA> LSOAToMSOADictionary = new Dictionary<string, OAToLSOAToMSOA>();
             using (StreamReader reader = new StreamReader(@"Output_Area_to_LSOA_to_MSOA_to_Local_Authority_District_(December_2017)_Lookup_with_Area_Classifications_in_Great_Britain.csv"))
             {
                 using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
@@ -65,9 +65,9 @@ namespace IMDByMSOA
                     List<OAToLSOAToMSOA> OALinks = csv.GetRecords<OAToLSOAToMSOA>().ToList();
                     foreach (OAToLSOAToMSOA oalink in OALinks)
                     {
-                        if (LSOAToMSOA.ContainsKey(oalink.LSOA11CD) == false)
+                        if (LSOAToMSOADictionary.ContainsKey(oalink.LSOA11CD) == false)
                         {
-                            LSOAToMSOA.Add(oalink.LSOA11CD, oalink.MSOA11CD);
+                            LSOAToMSOADictionary.Add(oalink.LSOA11CD, oalink);
                         }
                     }
                 }
@@ -98,9 +98,9 @@ namespace IMDByMSOA
 
             // Calculate a population-weighted deprivation score for each MSOA.
             List<IMDByMSOA> IMDsByMSOA = new List<IMDByMSOA>();
-            foreach (string MSOA in LSOAToMSOA.Values.Distinct())
+            foreach (string MSOA in LSOAToMSOADictionary.Values.Select(x => x.MSOA11CD).Distinct())
             {
-                List<string> LSOAsInThisMSOA = LSOAToMSOA.Where(x => x.Value == MSOA).Select(x => x.Key).ToList();
+                List<string> LSOAsInThisMSOA = LSOAToMSOADictionary.Where(x => x.Value.MSOA11CD == MSOA).Select(x => x.Key).ToList();
                 if (LSOAsInThisMSOA.Count > 0 && IMDsByLSOA.Where(x => LSOAsInThisMSOA.Contains(x.LSOA11CD)).Count() > 0)
                 {
                     List<IMDByLSOA> LSOAsInMSOA = IMDsByLSOA.Where(x => LSOAsInThisMSOA.Contains(x.LSOA11CD)).ToList();
@@ -116,7 +116,7 @@ namespace IMDByMSOA
                     }
                     IMDByMSOA iMDByMSOA = new IMDByMSOA()
                     {
-                        IMD19 = MSOAPopulationXIMD19/MSOAPopulation,
+                        IMD19Score = MSOAPopulationXIMD19/MSOAPopulation,
                         MSOA = MSOA
                     };
                     IMDsByMSOA.Add(iMDByMSOA);
@@ -155,24 +155,68 @@ namespace IMDByMSOA
                 msoa.PopulationOver70 = msoapop.Population70AndOver;
             }
 
-            // Calculate deciles for income
+            // Calculate national deciles (England) for income
             int MSOACount = IMDsByMSOA.Count;
             IMDsByMSOA = IMDsByMSOA.OrderBy(x => x.NetAnnualIncomeAfterHousingCosts2018).ToList();
             for (int i = 0; i < 10; i++)
             {
-                IMDsByMSOA.Skip((MSOACount * i) / 10).Take(MSOACount / 10).ToList().ForEach(x => x.IncomeDecile = i + 1);
+                IMDsByMSOA.Skip((MSOACount * i) / 10).Take(MSOACount / 10).ToList().ForEach(x => x.IncomeDecile_withinEngland = i + 1);
             }
-            IMDsByMSOA.Where(x => x.IncomeDecile == 0).ToList().ForEach(x => x.IncomeDecile = 10);
+            IMDsByMSOA.Where(x => x.IncomeDecile_withinEngland == 0).ToList().ForEach(x => x.IncomeDecile_withinEngland = 10); // Sometimes one list element gets left with a decile of 0
 
-            // Calculate deciles for IMD
+            // Calculate national (England) deciles for IMD
             MSOACount = IMDsByMSOA.Count;
-            IMDsByMSOA = IMDsByMSOA.OrderBy(x => x.IMD19).ToList();
+            IMDsByMSOA = IMDsByMSOA.OrderBy(x => x.IMD19Score).ToList();
             for (int i = 0; i < 10; i++)
             {
-                IMDsByMSOA.Skip((MSOACount * i) / 10).Take(MSOACount / 10).ToList().ForEach(x => x.DeprivationDecile = i + 1);
+                IMDsByMSOA.Skip((MSOACount * i) / 10).Take(MSOACount / 10).ToList().ForEach(x => x.DeprivationDecile_withinEngland = i + 1);
             }
-            // Sometimes one list element gets left with a decile of 0
-            IMDsByMSOA.Where(x => x.DeprivationDecile == 0).ToList().ForEach(x => x.DeprivationDecile = 10);
+            IMDsByMSOA.Where(x => x.DeprivationDecile_withinEngland == 0).ToList().ForEach(x => x.DeprivationDecile_withinEngland = 10); // Sometimes one list element gets left with a decile of 0
+
+
+            List<string> UniqueRegions = IMDsByMSOA.Select(x => x.Regioncode).Distinct().ToList();           
+            foreach (string regioncode in UniqueRegions)
+            {
+                // Calculate regional deciles (England) for income
+                List<IMDByMSOA> MSOAsInRegion = IMDsByMSOA.Where(x => x.Regioncode == regioncode).ToList();
+                int MSOACountInRegion = MSOAsInRegion.Count;
+                MSOAsInRegion = MSOAsInRegion.OrderBy(x => x.NetAnnualIncomeAfterHousingCosts2018).ToList();
+                for (int i = 0; i < 10; i++)
+                {
+                    MSOAsInRegion.Skip((MSOACountInRegion * i) / 10).Take(MSOACountInRegion / 10).ToList().ForEach(x => x.IncomeDecile_withinRegion = i + 1);
+                }
+                MSOAsInRegion.Where(x => x.IncomeDecile_withinRegion == 0).ToList().ForEach(x => x.IncomeDecile_withinRegion = 10); // Sometimes one list element gets left with a decile of 0
+
+                // Calculate regional (England) deciles for IMD
+                MSOAsInRegion = MSOAsInRegion.OrderBy(x => x.IMD19Score).ToList();
+                for (int i = 0; i < 10; i++)
+                {
+                    MSOAsInRegion.Skip((MSOACountInRegion * i) / 10).Take(MSOACountInRegion / 10).ToList().ForEach(x => x.DeprivationDecile_withinRegion = i + 1);
+                }
+                MSOAsInRegion.Where(x => x.DeprivationDecile_withinRegion == 0).ToList().ForEach(x => x.DeprivationDecile_withinRegion = 10); // Sometimes one list element gets left with a decile of 0
+            }
+
+            List<string> UniqueLAs = IMDsByMSOA.Select(x => x.LAcode).Distinct().ToList();
+            foreach (string LAcode in UniqueLAs)
+            {
+                // Calculate LA deciles (England) for income
+                List<IMDByMSOA> MSOAsInLA = IMDsByMSOA.Where(x => x.LAcode == LAcode).ToList();
+                int MSOACountInLA = MSOAsInLA.Count;
+                MSOAsInLA = MSOAsInLA.OrderBy(x => x.NetAnnualIncomeAfterHousingCosts2018).ToList();
+                for (int i = 0; i < 10; i++)
+                {
+                    MSOAsInLA.Skip((MSOACountInLA * i) / 10).Take(MSOACountInLA / 10).ToList().ForEach(x => x.IncomeDecile_withinLA = i + 1);
+                }
+                MSOAsInLA.Where(x => x.IncomeDecile_withinLA == 0).ToList().ForEach(x => x.IncomeDecile_withinLA = 10); // Sometimes one list element gets left with a decile of 0
+
+                // Calculate LA deciles (England) for IMD
+                MSOAsInLA = MSOAsInLA.OrderBy(x => x.IMD19Score).ToList();
+                for (int i = 0; i < 10; i++)
+                {
+                    MSOAsInLA.Skip((MSOACountInLA * i) / 10).Take(MSOACountInLA / 10).ToList().ForEach(x => x.DeprivationDecile_withinLA = i + 1);
+                }
+                MSOAsInLA.Where(x => x.DeprivationDecile_withinLA == 0).ToList().ForEach(x => x.DeprivationDecile_withinLA = 10); // Sometimes one list element gets left with a decile of 0
+            }
 
             // Write the result
             using (TextWriter textWriter = File.CreateText(@"IMDByMSOA_AndCovidData_AndIncomeData.csv"))
@@ -228,15 +272,19 @@ namespace IMDByMSOA
         public int Population2018 { get; set; }
         public int PopulationOver70 { get; set; }
         public double NetAnnualIncomeAfterHousingCosts2018 { get; set; }
-        public int IncomeDecile { get; set; }
+        public int IncomeDecile_withinEngland { get; set; }
+        public int IncomeDecile_withinRegion { get; set; }
+        public int IncomeDecile_withinLA { get; set; }
         public string MSOAcode { get; set; }
         public string MSOAname { get; set; }
         public string LAcode { get; set; }
         public string LAname { get; set; }
         public string Regioncode { get; set; }
         public string Regionname { get; set; }
-        public double IMD19 { get; set; }
-        public int DeprivationDecile { get; set; }
+        public double IMD19Score { get; set; }
+        public int DeprivationDecile_withinEngland { get; set; }
+        public int DeprivationDecile_withinRegion { get; set; }
+        public int DeprivationDecile_withinLA { get; set; }
         public double DeathsAsPercentOfExpected30MarTo17Apr2020 { get; set; }
         public double ExcessDeaths30MarTo17Apr2020 { get; set; }
         public double ExpectedDeaths30MarTo17Apr2020 { get; set; }
@@ -276,5 +324,4 @@ namespace IMDByMSOA
         public string CTRY11NM { get; set; }
         public int FID { get; set; }
     }
-
 }
