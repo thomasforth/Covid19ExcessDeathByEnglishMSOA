@@ -146,6 +146,9 @@ namespace IMDByMSOA
                 msoa.ConfirmedCovid19Deaths30MarTo17Apr2020 = cvdeaths.DeathsCOVID19;
                 msoa.AllDeaths30MarTo17Apr2020 = cvdeaths.DeathsAllCauses;
 
+                msoa.ExcessDeaths30MarTo17Apr2020 = msoa.AllDeaths30MarTo17Apr2020 - msoa.ExpectedDeaths30MarTo17Apr2020;
+                msoa.DeathsAsPercentOfExpected30MarTo17Apr2020 = msoa.AllDeaths30MarTo17Apr2020 / msoa.ExcessDeaths30MarTo17Apr2020;
+
                 // msoa population structure
                 MSOAPopulation msoapop = MSOAPopulationDictionary[msoa.MSOA];
                 msoa.Population2018 = msoapop.Population;
@@ -234,7 +237,8 @@ namespace IMDByMSOA
         public string Regionname { get; set; }
         public double IMD19 { get; set; }
         public int DeprivationDecile { get; set; }
-
+        public double DeathsAsPercentOfExpected30MarTo17Apr2020 { get; set; }
+        public double ExcessDeaths30MarTo17Apr2020 { get; set; }
         public double ExpectedDeaths30MarTo17Apr2020 { get; set; }
         public long AllDeaths30MarTo17Apr2020 { get; set; }
         public long ConfirmedCovid19Deaths30MarTo17Apr2020 { get; set; }
