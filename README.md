@@ -21,6 +21,7 @@ Covid-19 is causing deaths equally in all deprivation deciles in England. If tha
 
 ## What about age-standardised mortality rate?
 Covid-19 is causing deaths equally in all deprivation deciles in England. But the people who are dying in the most deprived deciles are younger. This means that the age-standarised mortality rate is very substantially higher in the most deprived deciles. The ONS have covered this very well. As long as you understand what their graphs are showing, you should read what they've written, I have nothing to add.
+But I bet that's not what you understood. I'm pretty confident that most of you who've been following the ONS' tweets and the media's coverage of their data will have thought that more people were dying in the most deprived parts of England than in the least deprived parts of England. That you were wrong matters a lot.
 
 ## Who are you Tom? You're probably just wrong.
 I may well be wrong. Show me where. Let's get closer to the truth together, in the open.
