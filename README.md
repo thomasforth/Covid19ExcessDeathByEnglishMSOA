@@ -16,8 +16,7 @@ I think so. We're very lucky that the ONS publish historic deaths by MSOA for En
 
 ## I just want to see the answer!
 Covid-19 is causing deaths equally in all deprivation deciles in England. If that surprises you then I don't blame you. I think the ONS have communicated their data poorly and most of the media (notably not ITV Granada and The FT) haven't questioned it enough.
-"\ 
- "
+<br/><br/>
 ![A graph showing that Covid-19 is causing deaths equally in all deprivation deciles in England.](Covid19DeathsByDeprivation.png)
 
 ## What about age-standardised mortality rate?
