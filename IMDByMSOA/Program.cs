@@ -26,12 +26,23 @@ namespace IMDByMSOA
 
             // Deaths involving Covid-19, exceptional release 01 May 2020
             // https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/deathsinvolvingcovid19bylocalareaanddeprivation
-            Dictionary<string, CVDeaths> CVDeathsDictionary = new Dictionary<string, CVDeaths>();
+            Dictionary<string, CVDeaths> CVDeathsMayDictionary = new Dictionary<string, CVDeaths>();
             using (StreamReader reader = new StreamReader(@"DeathsByMSOA_ONS1MayCovid19MortalityRelease.csv"))
             {
                 using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
                 {
-                    CVDeathsDictionary = csv.GetRecords<CVDeaths>().ToDictionary(x => x.MSOAcode, x => x);
+                    CVDeathsMayDictionary = csv.GetRecords<CVDeaths>().ToDictionary(x => x.MSOAcode, x => x);
+                }
+            }
+
+            // Deaths involving Covid-19, exceptional release 12 June 2020.
+            // https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/deaths/datasets/deathsinvolvingcovid19bylocalareaanddeprivation
+            Dictionary<string, CVDeaths> CVDeathsJuneDictionary = new Dictionary<string, CVDeaths>();
+            using (StreamReader reader = new StreamReader(@"DeathsByMSOA_ONS12JuneCovid19MortalityRelease.csv"))
+            {
+                using (CsvReader csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+                {
+                    CVDeathsJuneDictionary = csv.GetRecords<CVDeaths>().ToDictionary(x => x.MSOAcode, x => x);
                 }
             }
 
@@ -73,8 +84,9 @@ namespace IMDByMSOA
                 }
             }
 
-            // MSOA Centroids and Boundaries (if you want them later)
+            // MSOA Centroids and Boundaries (if you want them later for mapping or something. I'm not working with them here)
             // https://data.gov.uk/dataset/2cf1f346-2f74-4c06-bd4b-30d7e4df5ae7/middle-layer-super-output-area-msoa-boundaries
+
 
             // https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/middlesuperoutputareamidyearpopulationestimates
             Dictionary<string, MSOAPopulation> MSOAPopulationDictionary = new Dictionary<string, MSOAPopulation>();
@@ -139,15 +151,23 @@ namespace IMDByMSOA
                 // historic death rate by msoa
                 HistoricDeathsByMSOA historicdeathtojoin = HistoricDeathDictionary[msoa.MSOA];
                 msoa.AllDeaths20132014And2015 = historicdeathtojoin.DeathsAllAges;
-                msoa.ExpectedDeaths30MarTo17Apr2020 = msoa.AllDeaths20132014And2015 * 48 / (365 * 3);
+                msoa.ExpectedDeaths1MarTo17Apr2020 = msoa.AllDeaths20132014And2015 * 48 / (365 * 3);
+                msoa.ExpectedDeathsMarAprMay2020 = msoa.AllDeaths20132014And2015 / (4 * 3); // https://twitter.com/thomasforth/status/1271458772402216961
 
                 // Covid19 period deaths
-                CVDeaths cvdeaths = CVDeathsDictionary[msoa.MSOA];
-                msoa.ConfirmedCovid19Deaths30MarTo17Apr2020 = cvdeaths.DeathsCOVID19;
-                msoa.AllDeaths30MarTo17Apr2020 = cvdeaths.DeathsAllCauses;
+                CVDeaths cvdeathsMay = CVDeathsMayDictionary[msoa.MSOA];
+                msoa.ConfirmedCovid19Deaths1MarTo17Apr2020 = cvdeathsMay.DeathsCOVID19;
+                msoa.AllDeaths1MarTo17Apr2020 = cvdeathsMay.DeathsAllCauses;
 
-                msoa.ExcessDeaths30MarTo17Apr2020 = msoa.AllDeaths30MarTo17Apr2020 - msoa.ExpectedDeaths30MarTo17Apr2020;
-                msoa.DeathsAsPercentOfExpected30MarTo17Apr2020 = msoa.AllDeaths30MarTo17Apr2020 / msoa.ExpectedDeaths30MarTo17Apr2020;
+                CVDeaths cvdeathsJune = CVDeathsJuneDictionary[msoa.MSOA];
+                msoa.ConfirmedCovid19DeathsMarAprMay2020 = cvdeathsJune.DeathsCOVID19;
+                msoa.AllDeathsMarAprMay2020 = cvdeathsJune.DeathsAllCauses;                
+
+                msoa.ExcessDeaths1MarTo17Apr2020 = msoa.AllDeaths1MarTo17Apr2020 - msoa.ExpectedDeaths1MarTo17Apr2020;
+                msoa.DeathsAsPercentOfExpected1MarTo17Apr2020 = msoa.AllDeaths1MarTo17Apr2020 / msoa.ExpectedDeaths1MarTo17Apr2020;
+
+                msoa.ExcessDeathsMarAprMay2020 = msoa.AllDeathsMarAprMay2020 - msoa.ExpectedDeathsMarAprMay2020;
+                msoa.DeathsAsPercentOfExpectedMarAprMay2020 = msoa.AllDeathsMarAprMay2020 / msoa.ExpectedDeathsMarAprMay2020;
 
                 // msoa population structure
                 MSOAPopulation msoapop = MSOAPopulationDictionary[msoa.MSOA];
@@ -295,11 +315,16 @@ namespace IMDByMSOA
         public int DeprivationDecile_withinEngland { get; set; }
         public int DeprivationDecile_withinRegion { get; set; }
         public int DeprivationDecile_withinLA { get; set; }
-        public double DeathsAsPercentOfExpected30MarTo17Apr2020 { get; set; }
-        public double ExcessDeaths30MarTo17Apr2020 { get; set; }
-        public double ExpectedDeaths30MarTo17Apr2020 { get; set; }
-        public long AllDeaths30MarTo17Apr2020 { get; set; }
-        public long ConfirmedCovid19Deaths30MarTo17Apr2020 { get; set; }
+        public double DeathsAsPercentOfExpected1MarTo17Apr2020 { get; set; }
+        public double DeathsAsPercentOfExpectedMarAprMay2020 { get; set; }
+        public double ExcessDeaths1MarTo17Apr2020 { get; set; }
+        public double ExpectedDeaths1MarTo17Apr2020 { get; set; }
+        public double ExcessDeathsMarAprMay2020 { get; set; }
+        public double ExpectedDeathsMarAprMay2020 { get; set; }
+        public long AllDeaths1MarTo17Apr2020 { get; set; }
+        public long ConfirmedCovid19Deaths1MarTo17Apr2020 { get; set; }
+        public long AllDeathsMarAprMay2020 { get; set; }
+        public long ConfirmedCovid19DeathsMarAprMay2020 { get; set; }
         public long AllDeaths20132014And2015 { get; set; }
     }
 
