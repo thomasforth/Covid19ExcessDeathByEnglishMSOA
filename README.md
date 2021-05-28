@@ -8,6 +8,12 @@ Deprivation in England is quantified by the index of multiple deprivation (IMD).
 
 The ONS publish historic death rates by MSOA. This means that we can calculate the excess deaths by MSOA due to Covid-19 (by assuming that all excess deaths in March, April, and May 2020 are due to Covid-19). MSOAs are too small for this data to be statistically very useful, but once we aggregate them by IMD they become very useful. That's what I do in this repository, I calculate the decile of deprivation for every MSOA in England and the number of excess deaths in March, April, and May in that MSOA.
 
+If you're interested in the Covid-19 excess death stuff, I've written two pieces on that. They're at,
+* https://www.tomforth.co.uk/coronavirusanddeprivation/
+* https://www.tomforth.co.uk/coronavirusanddeprivation2/
+
+And [I was also on More or Less in September 2020](https://twitter.com/thomasforth/status/1305918033165193216) talking about it.
+
 ## Are the MSOA deprivation calculations right?
 They're probably quite close. I'm not sure how [Alasdair and I have got different answers](https://twitter.com/thomasforth/status/1257086421539618816), but our answers are close enough.
 
